@@ -1,0 +1,176 @@
+services:
+  web:
+    build: .
+    environment:
+      - REDIS_HOST=redis-service
+      - APP_TITLE=${APP_TITLE}
+    secrets:
+      - redis_password
+    depends_on:
+      redis:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    profiles:
+      - dev
+    networks:
+      app-net:
+        aliases:
+          - flask-service
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  redis:
+    image: redis:latest
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    secrets:
+      - redis_password
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    profiles:
+      - dev
+      - prod
+    networks:
+      app-net:
+        aliases:
+          - redis-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  web-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    environment:
+      - REDIS_HOST=redis-service
+      - APP_TITLE=${APP_TITLE_PROD}
+    secrets:
+      - redis_password
+    depends_on:
+      redis:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    profiles:
+      - prod
+    networks:
+      app-net:
+        aliases:
+          - flask-prod-service
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.7'
+          memory: 512M
+        reservations:
+          cpus: '0.4'
+          memory: 256M
+
+  nginx-dev:
+    image: nginx:latest
+    volumes:
+      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - web
+    networks:
+      app-net:
+        aliases:
+          - nginx-dev-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    profiles:
+      - dev
+
+  nginx-prod:
+    image: nginx:latest
+    volumes:
+      - ./nginx-prod.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - web-prod
+    networks:
+      app-net:
+        aliases:
+          - nginx-prod-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    profiles:
+      - prod
+        
+networks:
+  app-net:
+    driver: bridge
+    name: flask-app-net
+
+volumes:
+  redis-data:
+
+secrets:
+  redis_password:
+    file: ./redis_password.txt
