@@ -19,6 +19,9 @@ jobs:
           echo "APP_TITLE=CI Test App" >> .env
           echo "APP_TITLE_PROD=CI Test Prod App" >> .env
           docker compose --profile dev build
+          docker compose --profile test build
+      - name: Run unit tests
+        run: docker compose --profile test up --build --exit-code-from test
       - name: Run Docker Compose services
         run: docker compose --profile dev up -d --wait
       - name: Test application
