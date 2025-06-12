@@ -1,7 +1,8 @@
 import os
 from flask import Flask
 from redis import Redis, RedisError
-from prometheus_client import Counter, generate_latest, REGISTRY
+from prometheus_client import Counter, generate_latest, REGISTRY, Histogram
+request_latency = Histogram('flask_request_latency_seconds', 'Request latency')
 app = Flask(__name__)
 redis_host = os.getenv('REDIS_HOST', 'redis-service')
 app_title = os.getenv('APP_TITLE', 'Default App')
@@ -17,6 +18,9 @@ except FileNotFoundError:
     redis = None
 @app.route('/')
 def index():
+    with request_latency.time():
+        visits_counter.inc()
+        # ... existing code ...
     visits_counter.inc()
     if app.config.get('TESTING') or not redis:
         return f"{app_title}: Visited 1 times."
