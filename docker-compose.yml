@@ -17,10 +17,10 @@ services:
       retries: 3
       start_period: 10s
     logging:
-      driver: json-file
+      driver: fluentd
       options:
-        max-size: "10m"
-        max-file: "3"
+        fluentd-address: localhost:24224
+        tag: flask.app
     profiles:
       - dev
     networks:
@@ -70,10 +70,10 @@ services:
       retries: 3
       start_period: 5s
     logging:
-      driver: json-file
+      driver: fluentd
       options:
-        max-size: "5m"
-        max-file: "2"
+        fluentd-address: localhost:24224
+        tag: redis.app
     profiles:
       - dev
       - prod
@@ -179,6 +179,41 @@ services:
     profiles:
       - prod
 
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    profiles:
+      - dev
+    networks:
+      - app-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    profiles:
+      - dev
+    networks:
+      - app-net
+
+  fluentd:
+    image: fluent/fluentd:v1.16-1
+    volumes:
+      - ./fluent.conf:/fluentd/etc/fluent.conf
+      - fluentd-data:/fluentd/log
+    ports:
+      - "24224:24224"
+    profiles:
+      - dev
+    networks:
+      - app-net        
+
 networks:
   app-net:
     driver: bridge
@@ -186,6 +221,9 @@ networks:
 
 volumes:
   redis-data:
+  prometheus-data:
+  grafana-data:
+  fluentd-data:    
 
 secrets:
   redis_password:
