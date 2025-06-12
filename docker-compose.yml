@@ -21,6 +21,8 @@ services:
       options:
         fluentd-address: localhost:24224
         tag: flask.app
+        fluentd-buffer-limit: "1m"  # Advanced: Limit buffer size
+        fluentd-retry-wait: "1s"    # Advanced: Retry interval for Fluentd
     profiles:
       - dev
     networks:
@@ -45,7 +47,7 @@ services:
     environment:
       - REDIS_HOST=redis-service
       - APP_TITLE=Test App
-      - PYTHONPATH=/app        
+      - PYTHONPATH=/app
     depends_on:
       redis:
         condition: service_healthy
@@ -74,6 +76,8 @@ services:
       options:
         fluentd-address: localhost:24224
         tag: redis.app
+        fluentd-buffer-limit: "1m"
+        fluentd-retry-wait: "1s"
     profiles:
       - dev
       - prod
@@ -180,12 +184,16 @@ services:
       - prod
 
   prometheus:
-    image: prom/prometheus:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     ports:
       - "9090:9090"
+    depends_on:
+      - nginx-dev
     profiles:
       - dev
     networks:
@@ -212,7 +220,7 @@ services:
     profiles:
       - dev
     networks:
-      - app-net        
+      - app-net
 
 networks:
   app-net:
@@ -223,7 +231,7 @@ volumes:
   redis-data:
   prometheus-data:
   grafana-data:
-  fluentd-data:    
+  fluentd-data:
 
 secrets:
   redis_password:

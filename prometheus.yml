@@ -2,5 +2,6 @@ global:
   scrape_interval: 15s
 scrape_configs:
   - job_name: 'flask_app'
+    metrics_path: /metrics
     static_configs:
-      - targets: ['web:5000']
+      - targets: ['nginx-dev:80']  # Target NGINX instead of web
