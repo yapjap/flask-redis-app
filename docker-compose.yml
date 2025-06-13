@@ -4,8 +4,10 @@ services:
     environment:
       - REDIS_HOST=redis-service
       - APP_TITLE=${APP_TITLE}
+      - TEMP_API_KEY=${TEMP_API_KEY}  # Add environment-based secret        
     secrets:
       - redis_password
+      - flask_app_key  # New secret  
     depends_on:
       redis:
         condition: service_healthy
@@ -48,9 +50,13 @@ services:
       - REDIS_HOST=redis-service
       - APP_TITLE=Test App
       - PYTHONPATH=/app
+      - TEMP_API_KEY=${TEMP_API_KEY}  # Add environment-based secret
     depends_on:
       redis:
         condition: service_healthy
+    secrets:
+      - redis_password
+      - flask_app_key  # New secret          
     profiles:
       - test
     networks:
@@ -102,8 +108,10 @@ services:
     environment:
       - REDIS_HOST=redis-service
       - APP_TITLE=${APP_TITLE_PROD}
+      - TEMP_API_KEY=${TEMP_API_KEY}  # Add environment-based secret
     secrets:
       - redis_password
+      - flask_app_key  # New secret
     depends_on:
       redis:
         condition: service_healthy
@@ -236,3 +244,5 @@ volumes:
 secrets:
   redis_password:
     file: ./redis_password.txt
+  flask_app_key:
+    file: ./flask_app_key.txt
