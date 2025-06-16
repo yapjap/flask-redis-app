@@ -1,13 +1,14 @@
+---
 services:
   web:
     build: .
     environment:
       - REDIS_HOST=redis-service
       - APP_TITLE=${APP_TITLE}
-      - TEMP_API_KEY=${TEMP_API_KEY}  # Add environment-based secret        
+      - TEMP_API_KEY=${TEMP_API_KEY}  # Add environment-based secret
     secrets:
       - redis_password
-      - flask_app_key  # New secret  
+      - flask_app_key  # New secret
     depends_on:
       redis:
         condition: service_healthy
@@ -31,6 +32,9 @@ services:
       app-net:
         aliases:
           - flask-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1            
     deploy:
       replicas: 3
       restart_policy:
@@ -56,11 +60,14 @@ services:
         condition: service_healthy
     secrets:
       - redis_password
-      - flask_app_key  # New secret          
+      - flask_app_key  # New secret
     profiles:
       - test
     networks:
       - app-net
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
   redis:
     image: redis:latest
@@ -232,8 +239,9 @@ services:
 
 networks:
   app-net:
-    driver: bridge
-    name: flask-app-net
+    driver: overlay
+    name: flask-overlay-net
+    attachable: true
 
 volumes:
   redis-data:

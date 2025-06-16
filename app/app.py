@@ -2,6 +2,15 @@ import os
 from flask import Flask
 from redis import Redis, RedisError
 from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
+import socket
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+try:
+    logger.info(f"DNS resolution for redis-service: {socket.gethostbyname('redis-service')}")
+except socket.gaierror as e:
+    logger.error(f"DNS resolution failed: {e}")
+
 app = Flask(__name__)
 redis_host = os.getenv('REDIS_HOST', 'redis-service')
 app_title = os.getenv('APP_TITLE', 'Default App')
