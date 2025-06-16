@@ -17,7 +17,7 @@ except FileNotFoundError:
 visits_counter = Counter('flask_app_visits_total', 'Total visits to the app')
 request_latency = Histogram('flask_request_latency_seconds', 'Request latency')
 try:
-    redis = Redis(host='wrong-redis-host', port=6379, password=open('/run/secrets/redis_password').read().strip() if os.path.exists('/run/secrets/redis_password') else 'supersecretpassword', decode_responses=True)
+    redis = Redis(host=redis_host, port=6379, password=open('/run/secrets/redis_password').read().strip() if os.path.exists('/run/secrets/redis_password') else 'supersecretpassword', decode_responses=True)
 except FileNotFoundError:
     redis = None
 @app.route('/')
