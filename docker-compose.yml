@@ -17,10 +17,11 @@ services:
     logging:
       driver: fluentd
       options:
-        fluentd-address: localhost:24224
+        fluentd-address: fluentd:24224
         tag: flask.app
-        fluentd-buffer-limit: "1m"  # Advanced: Limit buffer size
-        fluentd-retry-wait: "1s"    # Advanced: Retry interval for Fluentd      
+        fluentd-buffer-limit: "512k"  # Smaller buffer
+        fluentd-retry-wait: "500ms"   # Faster retries
+        fluentd-async: "true"         # Async logging
     deploy:
       replicas: 3
       restart_policy:
@@ -31,6 +32,14 @@ services:
         parallelism: 1
         delay: 10s
         order: start-first
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+      mode: replicated
+      placement:
+        max_replicas_per_node: 2
+
     labels:
       - "com.example.description=Flask app for development"
       - "com.example.role=web"
@@ -38,7 +47,7 @@ services:
     - app-net
     profiles:
       - dev
-        
+
   test:
     build: .
     command: pytest tests/test_app.py
@@ -79,10 +88,11 @@ services:
     logging:
       driver: fluentd
       options:
-        fluentd-address: localhost:24224
+        fluentd-address: fluentd:24224
         tag: redis.app
-        fluentd-buffer-limit: "1m"
-        fluentd-retry-wait: "1s"
+        fluentd-buffer-limit: "512k"
+        fluentd-retry-wait: "500ms"
+        fluentd-async: "true"
     profiles:
       - dev
       - prod
@@ -124,8 +134,9 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "20m"
-        max-file: "5"
+        max-size: "10m"  # Rotate at 10MB
+        max-file: "3"    # Keep 3 files
+        compress: "true" # Compress rotated logs
     profiles:
       - prod
     networks:

@@ -1,12 +1,11 @@
 import os
+import json
 from flask import Flask
 from redis import Redis, RedisError
 from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 import socket
 import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.info(f"Starting Flask app with instance ID: {os.getpid()}")
+
 
 app = Flask(__name__)
 redis_host = os.getenv('REDIS_HOST', 'redis-service')
@@ -14,6 +13,15 @@ app_title = os.getenv('APP_TITLE', 'Default App')
 temp_api_key = os.getenv('TEMP_API_KEY', 'no-api-key')
 # Enable debug mode for dev
 app.config['DEBUG'] = os.getenv('FLASK_ENV', 'production') == 'development'
+# Structured JSON logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('{"time":"%(asctime)s","level":"%(levelname)s","message":"%(message)s"}'))
+logger.addHandler(handler)
+logger.info(f"Starting Flask app with instance ID: {os.getpid()}")
+# ... rest of existing app.py ...
+
 # Load Flask secret key
 try:
     with open('/run/secrets/flask_app_key', 'r') as f:
