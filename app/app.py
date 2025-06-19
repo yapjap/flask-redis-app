@@ -6,10 +6,7 @@ import socket
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-try:
-    logger.info(f"DNS resolution for redis-service: {socket.gethostbyname('redis-service')}")
-except socket.gaierror as e:
-    logger.error(f"DNS resolution failed: {e}")
+logger.info(f"Starting Flask app with instance ID: {os.getpid()}")
 
 app = Flask(__name__)
 redis_host = os.getenv('REDIS_HOST', 'redis-service')

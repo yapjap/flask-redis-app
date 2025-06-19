@@ -2,17 +2,12 @@
 services:
   web:
     build: .
-    environment:
-      - REDIS_HOST=redis-service
-      - APP_TITLE=${APP_TITLE}
-      - TEMP_API_KEY=${TEMP_API_KEY}  # Add environment-based secret
-    secrets:
-      - redis_password
-      - flask_app_key  # New secret
+    image: flask-app:1.0
     depends_on:
       redis:
         condition: service_healthy
-        restart: true
+        required: true
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -25,29 +20,25 @@ services:
         fluentd-address: localhost:24224
         tag: flask.app
         fluentd-buffer-limit: "1m"  # Advanced: Limit buffer size
-        fluentd-retry-wait: "1s"    # Advanced: Retry interval for Fluentd
-    profiles:
-      - dev
-    networks:
-      app-net:
-        aliases:
-          - flask-service
-          - flask-web-alias
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1            
+        fluentd-retry-wait: "1s"    # Advanced: Retry interval for Fluentd      
     deploy:
       replicas: 3
       restart_policy:
         condition: on-failure
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
-
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    labels:
+      - "com.example.description=Flask app for development"
+      - "com.example.role=web"
+    networks:
+    - app-net
+    profiles:
+      - dev
+        
   test:
     build: .
     command: pytest tests/test_app.py
@@ -160,7 +151,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     networks:
       app-net:
         aliases:
