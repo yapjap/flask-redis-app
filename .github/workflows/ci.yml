@@ -22,7 +22,7 @@ jobs:
     - name: Run tests
       run: docker compose run test
     - name: Push to Docker Hub
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.event_name == 'push' &&  github.ref == 'refs/heads/main'
       run: |
         echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
         docker compose push web          
