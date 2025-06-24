@@ -2,7 +2,7 @@
 services:
   web:
     build: .
-    image: flask-app:1.0
+    image: uyap/flask-redis-app:1.0      
     depends_on:
       redis:
         condition: service_healthy
