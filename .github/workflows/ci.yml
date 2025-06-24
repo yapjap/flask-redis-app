@@ -24,5 +24,6 @@ jobs:
     - name: Push to Docker Hub
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
-        echo "REDACTED" | docker login -u uyap --password-stdin
+        echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
         docker compose push web          
+
