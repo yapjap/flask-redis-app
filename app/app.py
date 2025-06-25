@@ -6,6 +6,14 @@ from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 import socket
 import logging
 
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('{"time":"%(asctime)s","level":"%(levelname)s","message":"%(message)s"}'))
+logger.addHandler(handler)
+
+# Test read-only filesystem (Day 25)
 try:
     with open('/tmp/test_write', 'w') as f:
         f.write('test')
@@ -18,28 +26,23 @@ redis_host = os.getenv('REDIS_HOST', 'redis-service')
 app_title = os.getenv('APP_TITLE', 'Default App')
 temp_api_key = os.getenv('TEMP_API_KEY', 'no-api-key')
 app.config['DEBUG'] = os.getenv('FLASK_ENV', 'production') == 'development'
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('{"time":"%(asctime)s","level":"%(levelname)s","message":"%(message)s"}'))
-logger.addHandler(handler)
+
+# Use TEMP_API_KEY for Flask SECRET_KEY
+app.config['SECRET_KEY'] = os.getenv('TEMP_API_KEY', 'default-secret-key')
 logger.info(f"Starting Flask app with instance ID: {os.getpid()}")
 
+# Initialize Redis with REDIS_PASSWORD from environment
+redis_password = os.getenv('REDIS_PASSWORD')
 try:
-    with open('/run/secrets/flask_app_key', 'r') as f:
-        app.config['SECRET_KEY'] = f.read().strip()
-except FileNotFoundError:
-    app.config['SECRET_KEY'] = 'default-secret-key'
+    redis = Redis(host=redis_host, port=6379, password=redis_password, decode_responses=True)
+    redis.ping()
+    logger.info("Connected to Redis successfully")
+except RedisError as e:
+    logger.error(f"Failed to connect to Redis: {e}")
+    redis = None
 
 visits_counter = Counter('flask_app_visits_total', 'Total visits to the app')
 request_latency = Histogram('flask_request_latency_seconds', 'Request latency')
-
-try:
-    redis_password = open('/run/secrets/redis_password').read().strip()
-    redis = Redis(host=redis_host, port=6379, password=redis_password, decode_responses=True)
-except FileNotFoundError:
-    logger.error("Redis password secret not found")
-    redis = None
 
 @app.route('/')
 def index():

@@ -2,10 +2,16 @@
 FROM python:3.9-slim AS builder
 WORKDIR /app
 COPY app/requirements.txt .
-RUN apt-get update && apt-get install -y curl redis-tools iputils-ping && pip install --user -r requirements.txt && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl redis-tools iputils-ping && \
+    pip install --user -r requirements.txt && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Final stage
 FROM python:3.9-slim
 WORKDIR /app
+# Install redis-tools in final stage
+RUN apt-get update && apt-get install -y redis-tools curl iputils-ping && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /root/.local /root/.local
 COPY app/ .
 ENV PATH=/root/.local/bin:$PATH

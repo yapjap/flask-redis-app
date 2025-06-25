@@ -4,4 +4,4 @@ until redis-cli -h redis-service -a $REDIS_PASSWORD ping; do
   sleep 2
 done
 echo "Redis is up!"
-exec python app.py
+
