@@ -2,3 +2,4 @@ flask
 redis
 pytest
 prometheus_client
+gunicorn

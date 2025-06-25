@@ -1,18 +1,14 @@
-# Build stage
-FROM python:3.9-slim AS builder
-WORKDIR /app
-COPY app/requirements.txt .
-RUN apt-get update && apt-get install -y curl redis-tools iputils-ping && \
-    pip install --user -r requirements.txt && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Final stage
 FROM python:3.9-slim
 WORKDIR /app
-# Install redis-tools in final stage
 RUN apt-get update && apt-get install -y redis-tools curl iputils-ping && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /root/.local /root/.local
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 appuser
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir flask gunicorn && \
+    chown -R appuser:appuser /app
 COPY app/ .
-ENV PATH=/root/.local/bin:$PATH
-CMD ["./wait-for-redis.sh"]
+USER appuser
+ENV PATH="/home/appuser/.local/bin:$PATH"
+# Ensure flask/gunicorn is in PATH for appuser
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
