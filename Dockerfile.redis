@@ -1,0 +1,4 @@
+FROM redis:latest
+RUN apt-get update && apt-get install -y bash && apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY redis_health.sh /redis_health.sh
+#RUN chmod +x /redis_health.sh

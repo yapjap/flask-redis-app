@@ -2,6 +2,11 @@ global:
   scrape_interval: 15s
 scrape_configs:
   - job_name: 'flask_app'
+    static_configs:
+      - targets: ['nginx-dev:80']  # Target NGINX instead of web
+  - job_name: 'health_check'
     metrics_path: /metrics
     static_configs:
       - targets: ['nginx-dev:80']  # Target NGINX instead of web
+        labels:
+          group: 'health'

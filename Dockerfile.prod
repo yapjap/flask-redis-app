@@ -1,12 +1,16 @@
-# Build stage
-FROM python:3.9-slim AS builder
-WORKDIR /app
-COPY app/requirements.txt .
-RUN apt-get update && apt-get install -y curl redis-tools && pip install --user -r requirements.txt flask redis gunicorn && apt-get clean && rm -rf /var/lib/apt/lists/*
-# Final stage
 FROM python:3.9-slim
 WORKDIR /app
-COPY --from=builder /root/.local /root/.local
+RUN apt-get update && apt-get install -y redis-tools curl iputils-ping && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 appuser
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir flask gunicorn prometheus_client && \
+    chown -R appuser:appuser /app
 COPY app/ .
-ENV PATH=/root/.local/bin:$PATH
+COPY app/health_check.sh /app/health_check.sh
+COPY redis_health.sh /redis_health.sh
+RUN chmod +x /app/health_check.sh /redis_health.sh
+USER appuser
+ENV PATH="/home/appuser/.local/bin:$PATH"
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
