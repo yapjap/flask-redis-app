@@ -15,6 +15,15 @@ logger.addHandler(handler)
 app = Flask(__name__)
 
 try:
+    with open('/app/config/flask.conf', 'r') as f:
+        for line in f:
+            key, value = line.strip().split('=')
+            os.environ[key] = value
+    logger.info(f"Loaded config: {os.getenv('FLASK_CONFIG')}")
+except FileNotFoundError:
+    logger.warning("No config file found, using defaults")
+
+try:
     redis_host = os.environ.get('REDIS_HOST', 'localhost')
     redis_password = os.environ.get('REDIS_PASSWORD', '')
 #    redis_client = Redis(host=redis_host, port=6379, password=redis_password)
@@ -30,7 +39,7 @@ except redis.exceptions.ConnectionError as e:
 @app.route('/')
 def index():
     try:
-        count = redis_client.incr('visits')
+        count = redis.incr('visits')  # Use 'redis' instead of 'redis_client'
         logger.info("Incremented visit count")
         with open('/tmp/test.txt', 'w') as f:
             f.write('Test write')
