@@ -1,0 +1,11 @@
+services:
+  web-prod:
+    environment:
+      - FLASK_ENV=${FLASK_ENV}
+      - APP_TITLE=${APP_TITLE}
+      - LOG_LEVEL=${LOG_LEVEL}
+    deploy:
+      replicas: 3
+  nginx-prod:
+    ports:
+      - "8082:80"

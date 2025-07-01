@@ -6,13 +6,16 @@ from redis.exceptions import RedisError
 from prometheus_client import Gauge
 import socket
 from flask import jsonify
-health_status = Gauge('flask_app_health_status', 'Health check status')
 
-logging.basicConfig(level=logging.INFO)
+log_level = os.getenv('LOG_LEVEL', 'INFO')
+logging.basicConfig(level=getattr(logging, log_level))
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter('{"time":"%(asctime)s","level":"%(levelname)s","message":"%(message)s"}'))
 logger.addHandler(handler)
+logger.info(f"Set log level to {log_level}")
+
+health_status = Gauge('flask_app_health_status', 'Health check status')
 
 app = Flask(__name__)
 
@@ -34,7 +37,7 @@ except FileNotFoundError:
 try:
     redis_host = os.environ.get('REDIS_HOST', 'localhost')
     redis_password = os.environ.get('REDIS_PASSWORD', '')
-#    redis_client = Redis(host=redis_host, port=6379, password=redis_password)
+#   redis_client = Redis(host=redis_host, port=6379, password=redis_password)
 #    redis_client.ping()
     # Initialize Redis client (adjust host/port/password as per your setup)
     redis = redis_client.Redis(host=redis_host, port=6379, password=redis_password, decode_responses=True)

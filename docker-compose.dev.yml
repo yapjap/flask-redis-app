@@ -1,0 +1,11 @@
+services:
+  web:
+    environment:
+      - FLASK_ENV=${FLASK_ENV}
+      - APP_TITLE=${APP_TITLE}
+      - LOG_LEVEL=${LOG_LEVEL}
+    ports:
+      - "5000:5000"  # Direct access for dev
+  nginx-dev:
+    ports:
+      - "8080:80"
