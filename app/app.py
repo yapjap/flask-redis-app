@@ -4,6 +4,8 @@ from flask import Flask
 import redis as redis_client  # Explicit alias to avoid confusion
 from redis.exceptions import RedisError
 from prometheus_client import Gauge
+import socket
+from flask import jsonify
 health_status = Gauge('flask_app_health_status', 'Health check status')
 
 logging.basicConfig(level=logging.INFO)
@@ -13,6 +15,12 @@ handler.setFormatter(logging.Formatter('{"time":"%(asctime)s","level":"%(levelna
 logger.addHandler(handler)
 
 app = Flask(__name__)
+
+try:
+    redis_ip = socket.gethostbyname('redis-service')
+    logger.info(f"Resolved redis-service to {redis_ip}")
+except socket.gaierror as e:
+    logger.error(f"Failed to resolve redis-service: {e}")
 
 try:
     with open('/app/config/flask.conf', 'r') as f:
@@ -61,3 +69,14 @@ def health():
     except RedisError:
         health_status.set(0)
         return 'Redis Unavailable', 503
+    
+@app.route('/services')
+def list_services():
+    services = ['redis-service', 'grafana-service', 'prometheus-service']
+    resolved = {}
+    for svc in services:
+        try:
+            resolved[svc] = socket.gethostbyname(svc)
+        except socket.gaierror:
+            resolved[svc] = 'unresolved'
+    return jsonify(resolved)

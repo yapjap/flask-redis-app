@@ -274,7 +274,11 @@ services:
       retries: 3
       start_period: 10s
     restart: unless-stopped
-
+    networks:
+      app-net:
+        aliases:
+          - prometheus-service
+            
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -284,7 +288,9 @@ services:
     profiles:
       - dev
     networks:
-      - app-net
+      app-net:
+        aliases:
+          - grafana-service        
 
   fluentd:
     image: fluent/fluentd:v1.16-1
