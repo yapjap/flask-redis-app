@@ -4,6 +4,7 @@ metadata:
   name: redis
   labels:
     app: redis
+    component: redis-backend
 spec:
   containers:
   - name: redis
