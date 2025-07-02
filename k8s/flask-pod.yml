@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: flask-app
+  labels:
+    app: flask
+spec:
+  containers:
+  - name: flask
+    image: uyap/flask-redis-app_web:latest
+    env:
+    - name: REDIS_HOST
+      value: "redis-service"
+    - name: APP_TITLE
+      value: "K8s Flask App"
+    ports:
+    - containerPort: 5000
