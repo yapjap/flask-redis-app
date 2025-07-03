@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 WORKDIR /app
-RUN apt-get update && apt-get install -y redis-tools curl iputils-ping && \
+RUN apt-get update && apt-get install -y redis-tools curl iputils-ping dnsutils && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 appuser
 COPY app/requirements.txt .

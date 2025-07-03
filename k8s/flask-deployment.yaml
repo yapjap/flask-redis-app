@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask
+  template:
+    metadata:
+      labels:
+        app: flask
+    spec:
+      containers:
+      - name: flask
+        image: uyap/flask-redis-app_web:latest
+        env:
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: FLASK_ENV
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: REDIS_HOST
+        - name: APP_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: APP_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_PASSWORD
