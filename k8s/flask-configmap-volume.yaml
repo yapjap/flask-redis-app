@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-app-config-volume
+data:
+  config.ini: |
+    [app]
+    FLASK_ENV=production
+    REDIS_HOST=redis-service
+    APP_PORT=5000
+
